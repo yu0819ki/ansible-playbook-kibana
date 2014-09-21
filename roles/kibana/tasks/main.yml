@@ -1,0 +1,23 @@
+---
+- name: check distribute
+  fail: msg='this tasks support for CentOS 6.x only. Your distribution is {{ ansible_distribution }} {{ ansible_distribution_version }}'
+  when: ansible_distribution_version|truncate(1, True, '') != '6'
+- name: put yum.repo
+  copy: src=etc/yum.repos.d/nginx.repo dest=/etc/yum.repos.d/nginx.repo
+- name: install git
+  yum: name=git state=present
+- name: install nginx
+  yum: name=nginx state=present
+- name: chkconfig on
+  command: chkconfig nginx on
+- name: cloning kibana source
+  git: repo=https://github.com/elasticsearch/kibana.git
+       dest=/usr/local/src/kibana
+       accept_hostkey=yes
+       version=v3.1.0
+- name: link web root dir
+  file: src=/usr/local/src/kibana/src dest=/usr/share/nginx/kibana state=link
+- name: put kibana.conf
+  template: src=etc/nginx/conf.d/kibana.conf dest=/etc/nginx/conf.d/kibana.conf
+- name: reload nginx
+  service: name=nginx state=reloaded
